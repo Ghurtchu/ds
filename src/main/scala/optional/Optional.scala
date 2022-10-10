@@ -26,7 +26,7 @@ object Optional {
 
   def absent[A]: Optional[A] = Absent
 
-  final case class Present[A](override val value: A) extends Optional[A] {
+  final case class Present[+A](override val value: A) extends Optional[A] {
 
     override def map[B](f: A => B): Optional[B] = Optional.present(f(value))
 

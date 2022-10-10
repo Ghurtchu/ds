@@ -17,14 +17,6 @@ sealed trait LinkedList[+A] {
 
 object LinkedList {
 
-  def main(args: Array[String]): Unit = {
-
-    println(LinkedList(1, 2, 3).filter(_ > 0))
-    println(LinkedList(1, 2, 3).filter(_ < 4))
-    println(LinkedList())
-
-  }
-
   def apply[A](elems: A*): LinkedList[A] = {
     @tailrec
     def loop(elements: Seq[A], accumulated: LinkedList[A]): LinkedList[A] = {
@@ -41,7 +33,7 @@ object LinkedList {
 
   def empty[A]: LinkedList[A] = Empty
 
-  final case class NonEmpty[A](override val head: A, override val tail: LinkedList[A]) extends LinkedList[A] {
+  final case class NonEmpty[+A](override val head: A, override val tail: LinkedList[A]) extends LinkedList[A] {
 
     override def foreach(f: A => Unit): Unit = {
       f(head)
