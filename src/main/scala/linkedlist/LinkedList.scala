@@ -1,9 +1,13 @@
 package linkedlist
 
+import optional.Optional
+
 import scala.annotation.tailrec
 
 sealed trait LinkedList[+A] {
   def head: A
+  def headOption: Optional[A]
+  def isEmpty: Boolean
   def tail: LinkedList[A]
   def foreach(f: A => Unit): Unit
   def append[A1 >: A](elem: A1): LinkedList[A1]
@@ -13,10 +17,23 @@ sealed trait LinkedList[+A] {
   def flatMap[B](f: A => LinkedList[B]): LinkedList[B]
   def filter(f: A => Boolean): LinkedList[A]
   def withFilter(f: A => Boolean): LinkedList[A]
+  def isDefinedAt(index: Int): Boolean
+  def dropWhile(f: A => Boolean): LinkedList[A]
+  def drop(amount: Int): LinkedList[A]
+  def zip[B](that: LinkedList[B]): LinkedList[(A, B)]
+  def distinct: LinkedList[A]
+  def count(f: A => Boolean): Int
+  def distinctBy[B](f: A => B): LinkedList[A]
+  def take(amount: Int): LinkedList[A]
+  def takeWhile(f: A => Boolean): LinkedList[A]
+  def splitAt(index: Int): (LinkedList[A], LinkedList[A])
+  def exists(f: A => Boolean): Boolean
+  def find(f: A => Boolean): Optional[A]
+  def concat[A1 >: A](that: LinkedList[A1]): LinkedList[A]
 }
 
 object LinkedList {
-
+  
   def apply[A](elems: A*): LinkedList[A] = {
     @tailrec
     def loop(elements: Seq[A], accumulated: LinkedList[A]): LinkedList[A] = {
@@ -27,9 +44,7 @@ object LinkedList {
     loop(elems.reverse, empty[A])
   }
 
-  def nonEmpty[A](head: A): LinkedList[A] = nonEmpty(head, empty)
-
-  def nonEmpty[A](head: A, tail: LinkedList[A]): LinkedList[A] = NonEmpty(head, tail)
+  def nonEmpty[A](head: A, tail: LinkedList[A] = Empty): LinkedList[A] = NonEmpty(head, tail)
 
   def empty[A]: LinkedList[A] = Empty
 
