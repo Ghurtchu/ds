@@ -33,7 +33,7 @@ sealed trait LinkedList[+A] {
 }
 
 object LinkedList {
-  
+
   def apply[A](elems: A*): LinkedList[A] = {
     @tailrec
     def loop(elements: Seq[A], accumulated: LinkedList[A]): LinkedList[A] = {
@@ -80,6 +80,45 @@ object LinkedList {
 
       loop(this, "LinkedList(")
     }
+
+    override def headOption: Optional[A] = Optional.present(head)
+
+    override def isEmpty: Boolean = false
+
+    override def isDefinedAt(index: Int): Boolean = ???
+
+    override def dropWhile(f: A => Boolean): LinkedList[A] = ???
+
+    override def drop(amount: Int): LinkedList[A] = ???
+
+    override def zip[B](that: LinkedList[B]): LinkedList[(A, B)] = ???
+
+    override def distinct: LinkedList[A] = ???
+
+    override def count(f: A => Boolean): Int = ???
+
+    override def distinctBy[B](f: A => B): LinkedList[A] = ???
+
+    override def take(amount: Int): LinkedList[A] = ???
+
+    override def takeWhile(f: A => Boolean): LinkedList[A] = ???
+
+    override def splitAt(index: Int): (LinkedList[A], LinkedList[A]) = ???
+
+    override def exists(f: A => Boolean): Boolean = find(f).fold(false)(_ => true)
+
+    override def find(f: A => Boolean): Optional[A] = {
+
+      @tailrec
+      def loop(list: LinkedList[A]): Optional[A] = list match {
+        case NonEmpty(head, tail) => if (f(head)) Optional.present(head) else loop(tail)
+        case Empty                => Optional.absent[A]
+      }
+
+      loop(this)
+    }
+
+    override def concat[A1 >: A](that: LinkedList[A1]): LinkedList[A] = ???
   }
 
   case object Empty extends LinkedList[Nothing] {
