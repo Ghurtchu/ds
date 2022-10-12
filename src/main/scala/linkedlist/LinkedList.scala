@@ -27,7 +27,6 @@ sealed trait LinkedList[+A] {
   def zip[B](that: LinkedList[B]): LinkedList[(A, B)]
   def distinct: LinkedList[A]
   def count(f: A => Boolean): Int
-  def distinctBy[B](f: A => B): LinkedList[A]
   def take(amount: Int): LinkedList[A]
   def takeWhile(f: A => Boolean): LinkedList[A]
   def splitAt(index: Int): (LinkedList[A], LinkedList[A])
@@ -41,7 +40,6 @@ sealed trait LinkedList[+A] {
 object LinkedList {
 
   def apply[A](elems: A*): LinkedList[A] = {
-
     @tailrec
     def loop(elements: Seq[A], accumulated: LinkedList[A]): LinkedList[A] = {
       if (elements.isEmpty) accumulated
@@ -105,7 +103,6 @@ object LinkedList {
     override def isEmpty: Boolean = false
 
     override def isDefinedAt(index: Int): Boolean = {
-
       @tailrec
       def loop(currentIndex: Int, list: LinkedList[A]): Boolean = {
         if (currentIndex < 0) false
@@ -117,7 +114,6 @@ object LinkedList {
     }
 
     override def dropWhile(f: A => Boolean): LinkedList[A] = {
-
       @tailrec
       def loop(originalList: LinkedList[A], accumulated: LinkedList[A]): LinkedList[A] = {
         originalList match {
@@ -129,19 +125,82 @@ object LinkedList {
       loop(this, Empty)
     }
 
-    override def drop(amount: Int): LinkedList[A] = ???
+    override def drop(amount: Int): LinkedList[A] = {
 
-    override def zip[B](that: LinkedList[B]): LinkedList[(A, B)] = ???
+      import scala.util.Try
 
-    override def distinct: LinkedList[A] = ???
+      if (amount <= 0) this
+      else {
+        @tailrec
+        def loop(idx: Int, updated: LinkedList[A]): LinkedList[A] = {
+          if (idx == 0) updated
+          else loop(idx - 1, LinkedList.nonEmpty(updated.tail.head, updated.tail.tail))
+        }
 
-    override def count(f: A => Boolean): Int = ???
+        Try(loop(amount, this))
+          .fold(_ => LinkedList.empty[A], identity)
+      }
+    }
 
-    override def distinctBy[B](f: A => B): LinkedList[A] = ???
+    override def zip[B](that: LinkedList[B]): LinkedList[(A, B)] = {
 
-    override def take(amount: Int): LinkedList[A] = ???
+      import scala.util.Try
 
-    override def takeWhile(f: A => Boolean): LinkedList[A] = ???
+      @tailrec
+      def loop(originalLeft: LinkedList[A], originalRight: LinkedList[B], acc: LinkedList[(A, B)]): LinkedList[(A, B)] = originalLeft match {
+        case NonEmpty(h, t) => loop(t, originalRight.tail, acc.append((h, originalRight.head)))
+        case Empty => if (originalRight.isEmpty) acc.reverse else LinkedList.empty[(A, B)]
+      }
+
+      Try(loop(this, that, LinkedList.empty[(A, B)]))
+        .fold(_ => LinkedList.empty[(A, B)], identity)
+    }
+
+    override def distinct: LinkedList[A] = {
+
+      @tailrec
+      def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
+        case NonEmpty(h, t) => loop(t, if (!acc.contains(h)) acc.append(h) else acc)
+        case Empty => acc.reverse
+      }
+
+      loop(this, LinkedList.empty[A])
+    }
+
+    override def count(f: A => Boolean): Int = {
+
+      @tailrec
+      def loop(acc: Int, original: LinkedList[A]): Int = original match {
+        case NonEmpty(h, t) => loop(if (f(h)) acc + 1 else acc, original.tail)
+        case Empty => acc
+      }
+
+      loop(0, this)
+    }
+
+    override def take(amount: Int): LinkedList[A] = {
+
+      import scala.util.Try
+
+      @tailrec
+      def loop(idx: Int, original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = {
+        if (idx == 0) acc.reverse
+        else loop(idx - 1, original.tail, acc.append(original.head))
+      }
+
+      Try(loop(amount, this, LinkedList.empty[A]))
+        .fold(_ => this, identity)
+    }
+
+    override def takeWhile(f: A => Boolean): LinkedList[A] = {
+      @tailrec
+      def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
+        case NonEmpty(h, _) => loop(original.tail, if (f(h)) acc.append(h) else acc)
+        case Empty => acc.reverse
+      }
+
+      loop(this, LinkedList.empty[A])
+    }
 
     override def splitAt(index: Int): (LinkedList[A], LinkedList[A]) = {
 
@@ -169,7 +228,6 @@ object LinkedList {
 
     override def concat[A1 >: A](that: LinkedList[A1]): LinkedList[A1] = {
       val firstReversed = this.reverse
-
       @tailrec
       def loop(original: LinkedList[A1], acc: LinkedList[A1]): LinkedList[A1] = original match {
         case NonEmpty(h, t) => loop(original.tail, acc.append(h))
@@ -203,7 +261,6 @@ object LinkedList {
     }
 
     override def dropLast: LinkedList[A] = {
-
       @tailrec
       def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
         case NonEmpty(h, t) if t != Empty => loop(t, acc = acc.append(h))
@@ -214,7 +271,6 @@ object LinkedList {
     }
 
     override def foldLeft[B](base: B)(reducer: (B, A) => B): B = {
-
       @tailrec
       def loop(updated: LinkedList[A], acc: B): B = updated match {
         case Empty => acc
@@ -251,43 +307,41 @@ object LinkedList {
 
     override def toString: String = "LinkedList()"
 
-    override def headOption: Optional[Nothing] = ???
+    override def headOption: Optional[Nothing] = Optional.absent[Nothing]
 
     override def isEmpty: Boolean = true
 
     override def isDefinedAt(index: Int): Boolean = false
 
-    override def dropWhile(f: Nothing => Boolean): LinkedList[Nothing] = ???
+    override def dropWhile(f: Nothing => Boolean): LinkedList[Nothing] = this
 
-    override def drop(amount: Int): LinkedList[Nothing] = ???
+    override def drop(amount: Int): LinkedList[Nothing] = this
 
-    override def zip[B](that: LinkedList[B]): LinkedList[(Nothing, B)] = ???
+    override def zip[B](that: LinkedList[B]): LinkedList[(Nothing, B)] = this
 
-    override def distinct: LinkedList[Nothing] = ???
+    override def distinct: LinkedList[Nothing] = this
 
-    override def count(f: Nothing => Boolean): Int = ???
+    override def count(f: Nothing => Boolean): Int = 0
 
-    override def distinctBy[B](f: Nothing => B): LinkedList[Nothing] = ???
+    override def take(amount: Int): LinkedList[Nothing] = this
 
-    override def take(amount: Int): LinkedList[Nothing] = ???
+    override def takeWhile(f: Nothing => Boolean): LinkedList[Nothing] = this
 
-    override def takeWhile(f: Nothing => Boolean): LinkedList[Nothing] = ???
+    override def splitAt(index: Int): (LinkedList[Nothing], LinkedList[Nothing]) = (LinkedList.empty[Nothing], LinkedList.empty[Nothing])
 
-    override def splitAt(index: Int): (LinkedList[Nothing], LinkedList[Nothing]) = ???
-
-    override def exists(f: Nothing => Boolean): Boolean = ???
+    override def exists(f: Nothing => Boolean): Boolean = false
 
     override def find(f: Nothing => Boolean): Optional[Nothing] = Optional.absent
 
     override def concat[A1 >: Nothing](that: LinkedList[A1]): LinkedList[A1] = that
 
-    override def last: Nothing = ???
+    override def last: Nothing = throw new NoSuchElementException("Empty")
 
-    override def init: LinkedList[Nothing] = ???
+    override def init: LinkedList[Nothing] = this
 
     override def dropLast: LinkedList[Nothing] = this
 
-    override def foldLeft[B](base: B)(reducer: (B, Nothing) => B): B = ???
+    override def foldLeft[B](base: B)(reducer: (B, Nothing) => B): B = base
 
     override def apply(index: Int): Nothing = throw new NoSuchElementException("Empty")
 
