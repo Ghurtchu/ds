@@ -8,12 +8,12 @@ trait StackProtocol[A] {
   def top: A
 }
 
-// must be "invariant" because it's mutable
+// must be "invariant" [A] because it's mutable
 final class Stack[A] private(elems: A*) extends StackProtocol[A] {
 
   private var elements: LinkedList[A] = LinkedList[A](elems: _*)
 
-  override def push(elem: A): Unit = elements = elements.append(elem)
+  override def push(elem: A): Unit = elements = elements.prepend(elem)
 
   override def pop(): A = {
     val popped = elements.head
@@ -23,6 +23,9 @@ final class Stack[A] private(elems: A*) extends StackProtocol[A] {
   }
 
   override def top: A = elements.head
+
+  override def toString: String = elements.toString.replace("LinkedList(", "Stack(")
+
 }
 
 object Stack {

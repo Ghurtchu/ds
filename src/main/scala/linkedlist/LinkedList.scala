@@ -13,7 +13,7 @@ sealed trait LinkedList[+A] {
   def tail: LinkedList[A]
   def init: LinkedList[A]
   def foreach(f: A => Unit): Unit
-  def append[A1 >: A](elem: A1): LinkedList[A1]
+  def prepend[A1 >: A](elem: A1): LinkedList[A1]
   def size: Int
   def contains[A1 >: A](elem: A1): Boolean
   def map[B](f: A => B): LinkedList[B]
@@ -72,7 +72,7 @@ object LinkedList {
       tail.foreach(f)
     }
 
-    override def append[A1 >: A](elem: A1): LinkedList[A1] = LinkedList.nonEmpty(elem, this)
+    override def prepend[A1 >: A](elem: A1): LinkedList[A1] = LinkedList.nonEmpty(elem, this)
 
     override def size: Int = 1 + tail.size
 
@@ -148,7 +148,7 @@ object LinkedList {
 
       @tailrec
       def loop(originalLeft: LinkedList[A], originalRight: LinkedList[B], acc: LinkedList[(A, B)]): LinkedList[(A, B)] = originalLeft match {
-        case NonEmpty(h, t) => loop(t, originalRight.tail, acc.append((h, originalRight.head)))
+        case NonEmpty(h, t) => loop(t, originalRight.tail, acc.prepend((h, originalRight.head)))
         case Empty => if (originalRight.isEmpty) acc.reverse else LinkedList.empty[(A, B)]
       }
 
@@ -160,7 +160,7 @@ object LinkedList {
 
       @tailrec
       def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
-        case NonEmpty(h, t) => loop(t, if (!acc.contains(h)) acc.append(h) else acc)
+        case NonEmpty(h, t) => loop(t, if (!acc.contains(h)) acc.prepend(h) else acc)
         case Empty => acc.reverse
       }
 
@@ -185,7 +185,7 @@ object LinkedList {
       @tailrec
       def loop(idx: Int, original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = {
         if (idx == 0) acc.reverse
-        else loop(idx - 1, original.tail, acc.append(original.head))
+        else loop(idx - 1, original.tail, acc.prepend(original.head))
       }
 
       Try(loop(amount, this, LinkedList.empty[A]))
@@ -195,7 +195,7 @@ object LinkedList {
     override def takeWhile(f: A => Boolean): LinkedList[A] = {
       @tailrec
       def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
-        case NonEmpty(h, _) => loop(original.tail, if (f(h)) acc.append(h) else acc)
+        case NonEmpty(h, _) => loop(original.tail, if (f(h)) acc.prepend(h) else acc)
         case Empty => acc.reverse
       }
 
@@ -207,7 +207,7 @@ object LinkedList {
       @tailrec
       def loop(idx: Int, original: LinkedList[A], left: LinkedList[A]): (LinkedList[A], LinkedList[A]) = {
         if (idx == index) (left.reverse, original)
-        else loop(idx + 1, original.tail, left.append(original.head))
+        else loop(idx + 1, original.tail, left.prepend(original.head))
       }
 
       loop(0, this, LinkedList.empty[A])
@@ -230,7 +230,7 @@ object LinkedList {
       val firstReversed = this.reverse
       @tailrec
       def loop(original: LinkedList[A1], acc: LinkedList[A1]): LinkedList[A1] = original match {
-        case NonEmpty(h, t) => loop(original.tail, acc.append(h))
+        case NonEmpty(h, t) => loop(original.tail, acc.prepend(h))
         case _ => acc
       }
 
@@ -243,27 +243,12 @@ object LinkedList {
       case _                  => throw new NoSuchElementException("Empty")
     }
 
-    override def init: LinkedList[A] = {
-
-      lazy val length: Int = this.size
-      lazy val startIndex: Int = length - 2
-
-      @annotation.tailrec
-      def loop(updatedIndex: Int, updatedList: LinkedList[A]): LinkedList[A] = updatedList match  {
-        case Empty => loop(updatedIndex - 1, updatedList.append(this(updatedIndex)))
-        case NonEmpty(_, Empty) => loop(updatedIndex - 1, updatedList.append(this (updatedIndex)))
-        case NonEmpty(_, _) =>
-          if (updatedIndex == 0) updatedList.append(this (updatedIndex))
-          else loop(updatedIndex - 1, updatedList.append(this (updatedIndex)))
-      }
-
-      loop(startIndex, Empty)
-    }
+    override def init: LinkedList[A] = dropLast
 
     override def dropLast: LinkedList[A] = {
       @tailrec
       def loop(original: LinkedList[A], acc: LinkedList[A]): LinkedList[A] = original match {
-        case NonEmpty(h, t) if t != Empty => loop(t, acc = acc.append(h))
+        case NonEmpty(h, t) if t != Empty => loop(t, acc = acc.prepend(h))
         case _ => acc.reverse
       }
 
@@ -291,7 +276,7 @@ object LinkedList {
 
     override def foreach(f: Nothing => Unit): Unit = ()
 
-    override def append[A1 >: Nothing](elem: A1): LinkedList[A1] = LinkedList.nonEmpty(elem, this)
+    override def prepend[A1 >: Nothing](elem: A1): LinkedList[A1] = LinkedList.nonEmpty(elem, this)
 
     override def size: Int = 0
 
